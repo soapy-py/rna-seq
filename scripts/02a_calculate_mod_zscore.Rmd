@@ -16,29 +16,31 @@ Calculate moderated z-score based on RNAseq data. This notebook is to be run aft
 # User inputs
 ```{r}
 #working directory
-wkdir = '/idi/cgtb/jbagnall/psa_RNAseq/git/psa_rnaseq_manuscript_rproject/'
+wkdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/'
+#wkdir = '/idi/cgtb/jbagnall/psa_RNAseq/git/psa_rnaseq_manuscript_rproject/'
 # wkdir = '/broad/hptmp/jbagnall/'
 
 #output directory
-outdir = '/broad/hptmp/jbagnall/'
+outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
 
 #run_name is something to identify this data set, will be included in saved file names
-run_name = "mocp0110"
+run_name = "jan16"
 
 #run_name_suffix is something to identify this data set (in case it's a subset of run_name), will be included in saved file names, can be empty string
-run_name_suffix = "2kd"
+run_name_suffix = "idk"
 
 #project_id0 could be the same as run_name, but is something corresponding to a field in the input data frame to identify this data set
-project_id0 = "MOCP_0110"
+project_id0 = "jan16"
 
 #date
-date0 = "231128"
+date0 = "25116"
 
 #vst file path, VST data calculated in 01_qc_and_vst.Rmd script
-vst_filepath = paste0(outdir, paste(run_name, run_name_suffix, "vst_remove_low_count_samples_and_genes_n191x5894.gct", sep = "_"))
+#vst_filepath = paste0(outdir, paste(run_name, run_name_suffix, "Project_vst_remove_low_count_samples_and_genes_n120x5849.gct", sep = "_"))
+vst_filepath = "/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/Project_vst_remove_low_count_samples_and_genes_n120x5849.gct"
 
 #Column name in the column metadata from the VST file that identifies the batches within which you will calculate z-scores, e.g. something that identifies the 384 well plates, or different data sets
-batch_column_name = "strain_id"
+batch_column_name = "project_id"
 
 #Value at which to clip the absolute value of the resulting z-scores, so outliers don't throw off down-stream correlations to the reference set
 #This value is usually 10 for z-scores (larger # of samples), and larger, e.g. 500, for nz-scores (smaller # of samples)
@@ -256,7 +258,6 @@ for(num in 1:num_conditions){
   cidx = which(colnames(data_zscore) %in% col_meta$id[idx])
   data_rep_collapse[,num] = modzs_collapse_avg(data = data_zscore[,cidx], ridx = seq(1, num_genes, by = 1))
 }
-
 colnames(data_rep_collapse) = condition_id_unique
 rownames(data_rep_collapse) = rownames(data_zscore)
 
