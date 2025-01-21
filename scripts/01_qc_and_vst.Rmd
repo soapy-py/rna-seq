@@ -3,8 +3,8 @@ title: "Prep for moderated z-score"
 output: html_notebook
 ---
 
-jbagnall@broadinstitute.org</br>
-Nov. 27, 2023</br>
+adapted from jbagnall@broadinstitute.org</br>
+Jan. 21, 2025</br>
 Prep RNAseq data before calculating the moderated z-score based on RNAseq data. This notebook performs the points below: <br />
 <ol>
   <li>Extract CD</li>
@@ -14,8 +14,8 @@ Prep RNAseq data before calculating the moderated z-score based on RNAseq data. 
   
 ```{r, setup, include=FALSE}
 #Set working directory to project directory
-wkdir = '/idi/cgtb/jbagnall/psa_RNAseq/git/psa_rnaseq_manuscript_rproject/'
-# wkdir = '/broad/hptmp/jbagnall/GSE166602/'
+wkdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/'
+
 
 # Make sure directories exist, otherwise create them
 end_char = substr(wkdir, nchar(wkdir), nchar(wkdir))
@@ -41,11 +41,11 @@ source('./functions/Functions_psa_rnaseq_processing.R')
 source('./functions/Functions_general.R')
 source('./functions/Functions_mod_z_score.R')
 
-count_path = '/broad/hptmp/jbagnall/Project_cds_count_table.rds'
-counts_include_cds_only = TRUE #If true, does not need to extract cds from gene labels
-outdir = '/broad/hptmp/jbagnall/Project/'
-run_name = "Project"
-project_id0 = "Project"
+count_path = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/gene_counts.csv'
+counts_include_cds_only = FALSE #If true, does not need to extract cds from gene labels
+outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
+run_name = "meow"
+project_id0 = "meow"
 
 end_char = substr(outdir, nchar(outdir), nchar(outdir))
 if(end_char != "/"){
@@ -60,11 +60,11 @@ if(!dir.exists(outdir)){
 getwd()
 
 #Gene metadata
-gene_meta_path = '/idi/cgtb/jbagnall/psa_RNAseq/annotation/gene_metadata_pao1_kegg_JB_220613.rds'
+gene_meta_path = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/gene_metadata.rds'
 gene_meta = readRDS(gene_meta_path)
 
 #Sample metadata
-sample_meta_path = '/idi/hunglabusers/jbagnall/psa_RNAseq_external/Project_sample_metadata.csv'
+sample_meta_path = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/sample_metadata.csv'
 sample_meta = read.csv(sample_meta_path, stringsAsFactors = F)
 
 #Compound metadata, may add if desired
@@ -152,16 +152,16 @@ cds_counts = readRDS(cds_count_path)
 ```{r}
 #Changing to lower case for easier matching
 sample_meta$project_id = tolower(sample_meta$project_id)
-sample_meta$sample_id = tolower(sample_meta$sample_id)
+sample_meta$old_sample_id = tolower(sample_meta$old_sample_id)
 colnames(cds_counts) = tolower(colnames(cds_counts))
 cdesc = data.frame(original_cid = colnames(cds_counts), project_id = tolower(project_id0))
 
-if(!all(cdesc$original_cid %in% sample_meta$sample_id)){
+if(!all(cdesc$original_cid %in% sample_meta$old_sample_id)){
   print("Error: column names do not match sample names in metadata")
 }
 
 #Add sample metadata
-cdesc = left_join(cdesc, sample_meta, by = c("original_cid" = "sample_id", "project_id"))
+cdesc = left_join(cdesc, sample_meta, by = c("original_cid" = "old_sample_id", "project_id"))
 ```
 
 ## 3) QC raw counts
@@ -228,8 +228,32 @@ cdesc_trim = cdesc[which(cdesc$original_cid %in% colnames(cds_counts_trim)),]
 ```
 
 
+## adding condition_id to cdesc_trim
+```{r}
+#taking condition_id from sample_meta  to cdesc_trim
+cdesc_trim <- merge( cdesc_trim, sample_meta[, c("old_sample_id", "condition_id")],by.x = "original_cid", by.y = "old_sample_id")
+
+#renaming condition-id.y and dropping extra cols
+cdesc_trim$condition_id <- cdesc_trim$condition_id.y  
+cdesc_trim <- cdesc_trim[, !(names(cdesc_trim) %in% c("condition_id.x", "condition_id.y"))]  
+
+cdesc_trim$condition_id <- as.factor(cdesc_trim$condition_id)
+
+rownames(cdesc_trim) <- cdesc_trim$original_cid
+all(rownames(cdesc_trim) == colnames(cds_counts_trim))  # Should return true
+
+#realigning and checking if true again
+cdesc_trim <- cdesc_trim[match(colnames(cds_counts_trim), rownames(cdesc_trim)), ]
+all(rownames(cdesc_trim) == colnames(cds_counts_trim))  # Should return true
+
+```
+
+
+
+
 ## Run VST
 ```{r}
+
 deseq_counts = DESeq2::DESeqDataSetFromMatrix(cds_counts_trim, colData = cdesc_trim, design = ~0 + condition_id)
 deseq_object_path = paste0(outdir, paste(run_name, 'prepped_for_deseq.rds', sep = "_"))
 saveRDS(deseq_counts, deseq_object_path)
@@ -291,6 +315,8 @@ data_vst_mat = data_vst@mat
 cdesc1 = data_vst@cdesc #gets the id column
 
 #PCA of before and after VST
-scaled_pca_vst = run_pca(data = data_vst_mat, col_meta = cdesc1, color_col = "pert_id", scale0 = T)
+scaled_pca_vst = run_pca(data = data_vst_mat, col_meta = cdesc1, color_col = "strain_id", scale0 = T)
 
 ```
+
+
