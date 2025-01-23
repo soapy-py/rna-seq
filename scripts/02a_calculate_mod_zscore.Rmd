@@ -150,7 +150,7 @@ ggplot(data_qnorm_df, aes(x = id, y = qnorm_vst, group = id)) +
   facet_wrap(~comb_id, scales = "free_x")+
   theme_bw(base_size = 14)
 
-data_qnorm_pca = run_pca(data_qnorm, col_meta = col_meta, color_col = batch_column_name, scale0 = T)
+data_qnorm_pca = run_pca(data_qnorm, col_meta = col_meta, color_col = "strain_id", scale0 = T)
 
 ```
 
@@ -251,8 +251,18 @@ data_rep_collapse = matrix(NA, nrow = num_genes, ncol = num_conditions)
 
 all(col_meta$id == colnames(data_zscore))
 
+#get rid of this if it doesn't work: assigning sample_meta$condition_id to col_meta$condition_id
+col_meta <- merge(col_meta, sample_meta[, c("old_sample_id", "condition_id")], 
+                  by.x = "original_cid", by.y = "old_sample_id", all.x = TRUE)
+
+col_meta$condition_id <- col_meta$condition_id.y
+col_meta <- col_meta[, !(names(col_meta) %in% c("condition_id.x", "condition_id.y"))]
+
+
+
 for(num in 1:num_conditions){
   idx = which(col_meta$condition_id == condition_id_unique[num])
+  print(idx)
   cidx = which(colnames(data_zscore) %in% col_meta$id[idx])
   data_rep_collapse[,num] = modzs_collapse_avg(data = data_zscore[,cidx], ridx = seq(1, num_genes, by = 1))
 }
