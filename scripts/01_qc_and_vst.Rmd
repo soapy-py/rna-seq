@@ -3,7 +3,7 @@ title: "Prep for moderated z-score"
 output: html_notebook
 ---
 
-adapted from jbagnall@broadinstitute.org</br>
+jbagnall@broadinstitute.org</br>
 Jan. 21, 2025</br>
 Prep RNAseq data before calculating the moderated z-score based on RNAseq data. This notebook performs the points below: <br />
 <ol>
@@ -44,8 +44,8 @@ source('./functions/Functions_mod_z_score.R')
 count_path = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/gene_counts.csv'
 counts_include_cds_only = FALSE #If true, does not need to extract cds from gene labels
 outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
-run_name = "meow"
-project_id0 = "meow"
+run_name = "mocp_0193"
+project_id0 = "mocp_0193"
 
 end_char = substr(outdir, nchar(outdir), nchar(outdir))
 if(end_char != "/"){
@@ -79,7 +79,7 @@ sample_meta = read.csv(sample_meta_path, stringsAsFactors = F)
 if(counts_include_cds_only){
   cds_count_path = count_path
 }else{
-  cds_count_path = paste0(outdir, run_name, '_counts_cds.rds')
+  cds_count_path = paste0(outdir, run_name, "_counts_cds.rds")
   if(file.exists(cds_count_path)){
     print("CDS counts already extracted previously")
   }else{
@@ -150,18 +150,19 @@ cds_counts = readRDS(cds_count_path)
 
 ### Add sample metadata
 ```{r}
+#changed all of sample_id to old_sample_id
 #Changing to lower case for easier matching
 sample_meta$project_id = tolower(sample_meta$project_id)
 sample_meta$old_sample_id = tolower(sample_meta$old_sample_id)
 colnames(cds_counts) = tolower(colnames(cds_counts))
 cdesc = data.frame(original_cid = colnames(cds_counts), project_id = tolower(project_id0))
 
-if(!all(cdesc$original_cid %in% sample_meta$old_sample_id)){
+if(!all(cdesc$original_cid %in% sample_meta$old_sample_id)){ 
   print("Error: column names do not match sample names in metadata")
 }
 
 #Add sample metadata
-cdesc = left_join(cdesc, sample_meta, by = c("original_cid" = "old_sample_id", "project_id"))
+cdesc = left_join(cdesc, sample_meta, by = c("original_cid" = "old_sample_id", "project_id")) 
 ```
 
 ## 3) QC raw counts
@@ -226,28 +227,6 @@ all(cdesc$original_cid %in% colnames(cds_counts_trim))
 sum((cdesc$original_cid %in% colnames(cds_counts_trim)))
 cdesc_trim = cdesc[which(cdesc$original_cid %in% colnames(cds_counts_trim)),]
 ```
-
-
-## adding condition_id to cdesc_trim
-```{r}
-#taking condition_id from sample_meta  to cdesc_trim
-cdesc_trim <- merge( cdesc_trim, sample_meta[, c("old_sample_id", "condition_id")],by.x = "original_cid", by.y = "old_sample_id")
-
-#renaming condition-id.y and dropping extra cols
-cdesc_trim$condition_id <- cdesc_trim$condition_id.y  
-cdesc_trim <- cdesc_trim[, !(names(cdesc_trim) %in% c("condition_id.x", "condition_id.y"))]  
-
-cdesc_trim$condition_id <- as.factor(cdesc_trim$condition_id)
-
-rownames(cdesc_trim) <- cdesc_trim$original_cid
-all(rownames(cdesc_trim) == colnames(cds_counts_trim))  # Should return true
-
-#realigning and checking if true again
-cdesc_trim <- cdesc_trim[match(colnames(cds_counts_trim), rownames(cdesc_trim)), ]
-all(rownames(cdesc_trim) == colnames(cds_counts_trim))  # Should return true
-
-```
-
 
 
 

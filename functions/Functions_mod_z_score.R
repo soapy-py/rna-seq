@@ -59,7 +59,7 @@ run_pca = function(data, col_meta = NA, color_col = "pert_mechanism", scale0 = T
   
   screendata_pcascaled <- data.frame(sample_id = rownames(pca_scaled$x), pc1 = pca_scaled$x[,1], pc2 = pca_scaled$x[,2], pc3 = pca_scaled$x[,3], pc4 = pca_scaled$x[,4], stringsAsFactors = FALSE)
   
-  if(is.na(col_meta)){
+  if(all(is.na(col_meta))){
     p0 = ggplot(data = screendata_pcascaled, aes(x = pc1, y = pc2)) +
       geom_point(alpha = 0.2)+
       xlab(paste("PC1 - ", pca_scaled.var.per[1], "%", sep="")) +

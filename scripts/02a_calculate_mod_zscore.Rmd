@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
 
-adapted from jbagnall@broadinstitute.org, adapted from scripts by Marek Orzechowski</br>
+jbagnall@broadinstitute.org, adapted from scripts by Marek Orzechowski</br>
 Jan. 21, 2025</br>
 Calculate moderated z-score based on RNAseq data. This notebook is to be run after 01_qc_and_vst.Rmd. This notebook performs the points below: <br />
 <ol>
@@ -22,20 +22,20 @@ wkdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/'
 outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
 
 #run_name is something to identify this data set, will be included in saved file names
-run_name = "jan21"
+run_name = "mocp_0193"
 
 #run_name_suffix is something to identify this data set (in case it's a subset of run_name), will be included in saved file names, can be empty string
-run_name_suffix = "idk"
+run_name_suffix = ""
 
 #project_id0 could be the same as run_name, but is something corresponding to a field in the input data frame to identify this data set
-project_id0 = "jan21"
+project_id0 = "mocp_0193"
 
 #date
-date0 = "25121"
+date0 = "25124"
 
 #vst file path, VST data calculated in 01_qc_and_vst.Rmd script
 #vst_filepath = paste0(outdir, paste(run_name, run_name_suffix, "Project_vst_remove_low_count_samples_and_genes_n120x5849.gct", sep = "_"))
-vst_filepath = "/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/meow_vst_remove_low_count_samples_and_genes_n120x5849.gct"
+vst_filepath = "/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/mocp_0193_vst_remove_low_count_samples_and_genes_n120x5849.gct"
 
 #Column name in the column metadata from the VST file that identifies the batches within which you will calculate z-scores, e.g. something that identifies the 384 well plates, or different data sets
 batch_column_name = "project_plate_id_384well"
@@ -114,6 +114,7 @@ data_vst@cdesc = col_meta
 ### Quantile normalization within each normalization unit (normalization across each sample)
 ```{r}
 #Loop over each comb_id
+
 data_qnorm = data_mat
 flag0 = rep(0, length(comb_id_unique)) #flag to check if all comb_ids ran
 for(num in 1:length(comb_id_unique)){
@@ -203,7 +204,7 @@ if(sum(flag0) > 0){
 ```{r}
 #Clip z-score values to account for extreme cases where genes with low count had low variation (i.e. low median absolute deviation)
 #Look at genes' z-score distribution
-#hist(data_zscore, breaks = 100)
+hist(data_zscore, breaks = 100)
 quantile(data_zscore, c(0.001, 0.005, 0.01, 0.05, 0.95, 0.99, 0.995, 0.999))
 
 data_zscore = base::pmax(data_zscore, -1*clip_value)
@@ -240,6 +241,7 @@ zscore = cmapR::parse_gctx(paste0(outdir, paste(run_name,run_name_suffix, "zscor
 col_meta = zscore@cdesc
 data_zscore = zscore@mat
 
+
 #identify replicates
 #perform moderated collapsing of averages
 condition_id_unique = unique(col_meta$condition_id)
@@ -251,18 +253,8 @@ data_rep_collapse = matrix(NA, nrow = num_genes, ncol = num_conditions)
 
 all(col_meta$id == colnames(data_zscore))
 
-#get rid of this if it doesn't work: assigning sample_meta$condition_id to col_meta$condition_id
-col_meta <- merge(col_meta, sample_meta[, c("old_sample_id", "condition_id")], 
-                  by.x = "original_cid", by.y = "old_sample_id", all.x = TRUE)
-
-col_meta$condition_id <- col_meta$condition_id.y
-col_meta <- col_meta[, !(names(col_meta) %in% c("condition_id.x", "condition_id.y"))]
-
-
-
 for(num in 1:num_conditions){
   idx = which(col_meta$condition_id == condition_id_unique[num])
-  print(idx)
   cidx = which(colnames(data_zscore) %in% col_meta$id[idx])
   data_rep_collapse[,num] = modzs_collapse_avg(data = data_zscore[,cidx], ridx = seq(1, num_genes, by = 1))
 }
@@ -276,7 +268,7 @@ rownames(data_rep_collapse) = rownames(data_zscore)
 ### Save replicate collapsed data as gct file
 ```{r}
 #Revamp column metadata since replicates are collapsed
-col_meta_collapse = select(col_meta, condition_id, pert_id, pert_dose, pert_idose, pert_dose_unit, pert_iname, pert_itime, pert_time, pert_time_unit, pert_target, pert_mechanism, pert_submechanism, pert_type, pharmaceutical_class, project_id, strain_id, x_dose_mic_high_inoculum, vehicle, comb_id) %>% distinct()
+col_meta_collapse = select(sample_meta, condition_id, pert_id, pert_dose, pert_idose, pert_dose_unit, pert_iname, pert_itime, pert_time, pert_time_unit, pert_type, project_id, strain_id, x_dose_mic_high_inoculum) %>% distinct()
 
 col_meta_collapse_sub = data.frame(condition_id = condition_id_unique)
 col_meta_collapse_sub = left_join(col_meta_collapse_sub, col_meta_collapse, by = "condition_id")
@@ -290,7 +282,7 @@ num_col_collapse = dim(data_rep_collapse)[2]
 ```
 
 ### Plots and QC
-```{r}
+```{r}    
 col_meta_collapse_sub$id = col_meta_collapse_sub$condition_id
 data_zscore_rep_collapse_pca = run_pca(data_rep_collapse, col_meta = col_meta_collapse_sub, color_col = "pert_dose", scale0 = T)
 ```
@@ -298,38 +290,38 @@ data_zscore_rep_collapse_pca = run_pca(data_rep_collapse, col_meta = col_meta_co
 
 ### Add inactive info and dose ranks to the column metadata if desired (optional)
 ```{r}
-data_rep_collapse_path = paste0(outdir, paste(run_name,run_name_suffix, "modzscore_remove_low_count_samples_and_genes_rep_collapse", sep = "_"), "_n", num_col_collapse, "x", num_row_collapse, ".gct")
-data_rep_collapse = parse_gctx(data_rep_collapse_path)
-data_rep_collapse_mat = data_rep_collapse@mat
-
-#Determine weak signal separately based on DESeq2 p-values
-inactives = readRDS('/idi/cgtb/jbagnall/psa_RNAseq/mocp0110_2kd/zscore_by_strain/mocp_0110_2kd_txn_inactive_230705.rds')
-
-#condition_ids changed to include 5 digits after the decimal in the pert_dose to be consistent with previous runs
-inactives$numerator_condition_id_old = inactives$numerator_condition_id
-inactives = mutate(inactives, numerator_condition_id=paste(numerator_project_id, numerator_pert_id, paste0(sprintf("%.5f", round(numerator_pert_dose, 5)), "uM"), numerator_strain_id, "90min:A", sep = ":"))
- 
-cdesc1 = data_rep_collapse@cdesc
-colnames(cdesc1)
-colnames(inactives)
-any(tolower(cdesc1$condition_id) %in% tolower(inactives$numerator_condition_id))
-cdesc1 = mutate(cdesc1, inactive = ifelse(tolower(condition_id) %in% tolower(inactives$numerator_condition_id), TRUE, FALSE))
-cdesc1 = cdesc1 %>%
-  group_by(strain_id, pert_id, pert_time, pert_itime) %>%
-  arrange(pert_dose) %>%
-  mutate(dose_rank = 1:n()) %>% 
-  ungroup()
-
-any(cdesc1$id %in% colnames(data_rep_collapse@mat))
-
-#reorder cdesc
-cidx = match(colnames(data_rep_collapse@mat), cdesc1$id)
-cdesc1 = cdesc1[cidx, ]
-all(cdesc1$id == colnames(data_rep_collapse@mat))
-str(cdesc1)
-
-data_rep_collapse@cdesc = as.data.frame(cdesc1)
-
-write_gct(data_rep_collapse, paste0(outdir, paste(run_name, run_name_suffix, 'modzscore_remove_low_count_samples_and_genes_rep_collapse_inactivelabel', date0, sep = "_")))
- 
+# data_rep_collapse_path = paste0(outdir, paste(run_name,run_name_suffix, "modzscore_remove_low_count_samples_and_genes_rep_collapse", sep = "_"), "_n", num_col_collapse, "x", num_row_collapse, ".gct")
+# data_rep_collapse = parse_gctx(data_rep_collapse_path)
+# data_rep_collapse_mat = data_rep_collapse@mat
+# 
+# #Determine weak signal separately based on DESeq2 p-values
+# inactives = readRDS('/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/meow_vst_remove_samples_and_genes.rds')
+# 
+# #condition_ids changed to include 5 digits after the decimal in the pert_dose to be consistent with previous runs
+# inactives$numerator_condition_id_old = inactives$numerator_condition_id
+# inactives = mutate(inactives, numerator_condition_id=paste(numerator_project_id, numerator_pert_id, paste0(sprintf("%.5f", round(numerator_pert_dose, 5)), "uM"), numerator_strain_id, "90min:A", sep = ":"))
+#  
+# cdesc1 = data_rep_collapse@cdesc
+# colnames(cdesc1)
+# colnames(inactives)
+# any(tolower(cdesc1$condition_id) %in% tolower(inactives$numerator_condition_id))
+# cdesc1 = mutate(cdesc1, inactive = ifelse(tolower(condition_id) %in% tolower(inactives$numerator_condition_id), TRUE, FALSE))
+# cdesc1 = cdesc1 %>%
+#   group_by(strain_id, pert_id, pert_time, pert_itime) %>%
+#   arrange(pert_dose) %>%
+#   mutate(dose_rank = 1:n()) %>% 
+#   ungroup()
+# 
+# any(cdesc1$id %in% colnames(data_rep_collapse@mat))
+# 
+# #reorder cdesc
+# cidx = match(colnames(data_rep_collapse@mat), cdesc1$id)
+# cdesc1 = cdesc1[cidx, ]
+# all(cdesc1$id == colnames(data_rep_collapse@mat))
+# str(cdesc1)
+# 
+# data_rep_collapse@cdesc = as.data.frame(cdesc1)
+# 
+# write_gct(data_rep_collapse, paste0(outdir, paste(run_name, run_name_suffix, 'modzscore_remove_low_count_samples_and_genes_rep_collapse_inactivelabel', date0, sep = "_")))
+#  
 ```
