@@ -290,38 +290,38 @@ data_zscore_rep_collapse_pca = run_pca(data_rep_collapse, col_meta = col_meta_co
 
 ### Add inactive info and dose ranks to the column metadata if desired (optional)
 ```{r}
-# data_rep_collapse_path = paste0(outdir, paste(run_name,run_name_suffix, "modzscore_remove_low_count_samples_and_genes_rep_collapse", sep = "_"), "_n", num_col_collapse, "x", num_row_collapse, ".gct")
-# data_rep_collapse = parse_gctx(data_rep_collapse_path)
-# data_rep_collapse_mat = data_rep_collapse@mat
-# 
-# #Determine weak signal separately based on DESeq2 p-values
-# inactives = readRDS('/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/meow_vst_remove_samples_and_genes.rds')
-# 
-# #condition_ids changed to include 5 digits after the decimal in the pert_dose to be consistent with previous runs
-# inactives$numerator_condition_id_old = inactives$numerator_condition_id
-# inactives = mutate(inactives, numerator_condition_id=paste(numerator_project_id, numerator_pert_id, paste0(sprintf("%.5f", round(numerator_pert_dose, 5)), "uM"), numerator_strain_id, "90min:A", sep = ":"))
-#  
-# cdesc1 = data_rep_collapse@cdesc
-# colnames(cdesc1)
-# colnames(inactives)
-# any(tolower(cdesc1$condition_id) %in% tolower(inactives$numerator_condition_id))
-# cdesc1 = mutate(cdesc1, inactive = ifelse(tolower(condition_id) %in% tolower(inactives$numerator_condition_id), TRUE, FALSE))
-# cdesc1 = cdesc1 %>%
-#   group_by(strain_id, pert_id, pert_time, pert_itime) %>%
-#   arrange(pert_dose) %>%
-#   mutate(dose_rank = 1:n()) %>% 
-#   ungroup()
-# 
-# any(cdesc1$id %in% colnames(data_rep_collapse@mat))
-# 
-# #reorder cdesc
-# cidx = match(colnames(data_rep_collapse@mat), cdesc1$id)
-# cdesc1 = cdesc1[cidx, ]
-# all(cdesc1$id == colnames(data_rep_collapse@mat))
-# str(cdesc1)
-# 
-# data_rep_collapse@cdesc = as.data.frame(cdesc1)
-# 
-# write_gct(data_rep_collapse, paste0(outdir, paste(run_name, run_name_suffix, 'modzscore_remove_low_count_samples_and_genes_rep_collapse_inactivelabel', date0, sep = "_")))
-#  
+data_rep_collapse_path = paste0(outdir, paste(run_name,run_name_suffix, "modzscore_remove_low_count_samples_and_genes_rep_collapse", sep = "_"), "_n", num_col_collapse, "x", num_row_collapse, ".gct")
+data_rep_collapse = parse_gctx(data_rep_collapse_path)
+data_rep_collapse_mat = data_rep_collapse@mat
+
+#Determine weak signal separately based on DESeq2 p-values
+inactives = readRDS('/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/meow_vst_remove_samples_and_genes.rds')
+
+#condition_ids changed to include 5 digits after the decimal in the pert_dose to be consistent with previous runs
+inactives$numerator_condition_id_old = inactives$numerator_condition_id
+inactives = mutate(inactives, numerator_condition_id=paste(numerator_project_id, numerator_pert_id, paste0(sprintf("%.5f", round(numerator_pert_dose, 5)), "uM"), numerator_strain_id, "90min:A", sep = ":"))
+
+cdesc1 = data_rep_collapse@cdesc
+colnames(cdesc1)
+colnames(inactives)
+any(tolower(cdesc1$condition_id) %in% tolower(inactives$numerator_condition_id))
+cdesc1 = mutate(cdesc1, inactive = ifelse(tolower(condition_id) %in% tolower(inactives$numerator_condition_id), TRUE, FALSE))
+cdesc1 = cdesc1 %>%
+  group_by(strain_id, pert_id, pert_time, pert_itime) %>%
+  arrange(pert_dose) %>%
+  mutate(dose_rank = 1:n()) %>%
+  ungroup()
+
+any(cdesc1$id %in% colnames(data_rep_collapse@mat))
+
+#reorder cdesc
+cidx = match(colnames(data_rep_collapse@mat), cdesc1$id)
+cdesc1 = cdesc1[cidx, ]
+all(cdesc1$id == colnames(data_rep_collapse@mat))
+str(cdesc1)
+
+data_rep_collapse@cdesc = as.data.frame(cdesc1)
+
+write_gct(data_rep_collapse, paste0(outdir, paste(run_name, run_name_suffix, 'modzscore_remove_low_count_samples_and_genes_rep_collapse_inactivelabel', date0, sep = "_")))
+
 ```
