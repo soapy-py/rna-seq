@@ -22,7 +22,7 @@ wkdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/'
 outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
 
 #run_name is something to identify this data set, will be included in saved file names
-run_name = "mocp_0193"
+run_name = "mocp_0193_6h"
 
 #run_name_suffix is something to identify this data set (in case it's a subset of run_name), will be included in saved file names, can be empty string
 run_name_suffix = ""
@@ -31,11 +31,11 @@ run_name_suffix = ""
 project_id0 = "mocp_0193"
 
 #date
-date0 = "25124"
+date0 = "25127"
 
 #vst file path, VST data calculated in 01_qc_and_vst.Rmd script
 #vst_filepath = paste0(outdir, paste(run_name, run_name_suffix, "Project_vst_remove_low_count_samples_and_genes_n120x5849.gct", sep = "_"))
-vst_filepath = "/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/mocp_0193_vst_remove_low_count_samples_and_genes_n120x5849.gct"
+vst_filepath = "/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output/mocp_0193_6h_vst_remove_low_count_samples_and_genes_n180x5846.gct"
 
 #Column name in the column metadata from the VST file that identifies the batches within which you will calculate z-scores, e.g. something that identifies the 384 well plates, or different data sets
 batch_column_name = "project_plate_id_384well"

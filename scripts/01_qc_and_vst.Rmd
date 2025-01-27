@@ -44,7 +44,7 @@ source('./functions/Functions_mod_z_score.R')
 count_path = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/gene_counts.csv'
 counts_include_cds_only = FALSE #If true, does not need to extract cds from gene labels
 outdir = '/Users/sophie_chen/downloads/psa_rnaseq_manuscript_rproject-main/output'
-run_name = "mocp_0193"
+run_name = "mocp_0193_6h"
 project_id0 = "mocp_0193"
 
 end_char = substr(outdir, nchar(outdir), nchar(outdir))
